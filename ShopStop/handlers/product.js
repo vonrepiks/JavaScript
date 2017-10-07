@@ -1,11 +1,11 @@
 const url = require('url');
-const database = require('../config/database.js');
 const fs = require('fs');
 const path = require('path');
-const qs = require('querystring');
 const multiparty = require('multiparty');
 const shortid = require('shortid');
-
+const utils = require('../utils');
+const Product = require('../models/Product');
+const Category = require('../models/Category');
 
 module.exports = (req, res) => {
     req.pathname = req.pathname || url.parse(req.url).pathname;
@@ -14,29 +14,28 @@ module.exports = (req, res) => {
         let filePath = path.normalize(path.join(__dirname, '../views/product/add.html'));
 
         fs.readFile(filePath, (err, data) => {
-            if (err) {
-                console.log(err);
-                res.writeHead(404, {
-                    'Content-type': 'text/plain'
-                });
+            utils.error(err);
 
-                res.write('404 not found!');
-                res.end();
-                return;
-            }
+            Category.find().then((categories) => {
+                let replacement = '<select class="input-field" name="category">';
 
-            res.writeHead(200, {
-                'Content-Type': 'text/html'
+                for (let category of categories) {
+                    replacement += `$<option value="${category._id}">${category.name}</option>`;
+                }
+
+                replacement += '</select>';
+
+                data = data.toString().replace('{categories}', replacement);
+                utils.success(res, data);
             });
-            res.write(data);
-            res.end();
-        })
+        });
+
     } else if (req.pathname === '/product/add' && req.method === 'POST') {
         let form = new multiparty.Form();
         let product = {};
-        
+
         form.on('part', (part) => {
-             if (part.filename) {
+            if (part.filename) {
                 let dataString = '';
 
                 part.setEncoding('binary');
@@ -46,15 +45,12 @@ module.exports = (req, res) => {
 
                 part.on('end', () => {
                     let filename = shortid.generate();
-                    let filePath = '/content/images/' + filename + '.bin';
+                    let filePath = '/public/product_images/' + filename + '.bin';
 
                     product.image = filePath;
                     fs.writeFile(
                         `.${filePath}`, dataString, { encoding: 'ascii' }, (err) => {
-                            if (err) {
-                                console.log(err);
-                                return;
-                            }
+                            utils.error(err);
                         });
                 });
             } else {
@@ -70,15 +66,17 @@ module.exports = (req, res) => {
         });
 
         form.on('close', () => {
-            database.products.add(product);
-            res.writeHead(302, {
-                Location: '/'
+            Product.create(product).then((insertedProduct) => {
+                Category.findById(product.category).then(category => {
+                    category.products.push(insertedProduct._id);
+                    category.save();
+                });
             });
-            res.end();
         });
 
+        utils.redirect(res, '/');
         form.parse(req);
     } else {
         return true;
     }
-}
+};

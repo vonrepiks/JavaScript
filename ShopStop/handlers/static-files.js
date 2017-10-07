@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const urlPackage = require('url');
+const url = require('url');
+const utils = require('../utils');
 
 function getContentType(url) {
-
     let urlTokens = url.split("/");
     let extension = urlTokens[urlTokens.length - 1].split(".")[1];
     switch (extension) {
@@ -17,20 +17,12 @@ function getContentType(url) {
 module.exports = (req, res) => {
     req.pathname = req.pathname || url.parse(req.url).pathname;
 
-    if (req.pathname.startsWith('/content/') && req.method === 'GET') {
+    if (req.pathname.startsWith('/public/') && req.method === 'GET') {
         let filePath = path.normalize(path.join(__dirname, `..${req.pathname}`));
 
         fs.readFile(filePath, (err, data) => {
-            if (err) {
-                res.WriteHead(404, {
-                    'Content-type': 'text/plain'
-                });
-
-                res.write('404 not found!');
-                res.end();
-                return;
-            }
-
+            utils.error(err);
+            console.log(getContentType(req.pathname));
             res.writeHead(200, {
                 'Content-Type': getContentType(req.pathname)
             });
@@ -38,6 +30,11 @@ module.exports = (req, res) => {
             res.end();
         });
     } else {
-        return true;
+        res.writeHead(404, {
+            'Content-type': 'text/plain'
+        });
+
+        res.write('404 not found!');
+        res.end();
     }
-}
+};
