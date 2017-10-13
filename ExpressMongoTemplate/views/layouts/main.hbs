@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My test app</title>
+    <link href="/css/site.css" type="text/css" rel="stylesheet"/>
+    <script src="/scripts/jquery-3.2.1.min.js"></script>
+    <script src="/scripts/js.js"></script>
+</head>
+<body>
+<header>
+    <ul class="menu">
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="/contacts">Contacts</a></li>
+        {{#if currentUser}}
+            <li>{{currentUser.username}}</li>
+            <li>
+                <form id="logout-form" action="/logout" method="post"></form>
+                <a href="javascript:document.getElementById('logout-form').submit()">Logout</a>
+            </li>
+        {{else}}
+            <li><a href="/register">Register</a></li>
+            <li><a href="/login">Login</a></li>
+        {{/if}}
+        {{#if sessionFlash.message}}
+            <div class={{sessionFlash.type}}>{{sessionFlash.message}}</div>
+        {{/if}}
+        {{#if sessionFlash.message}}
+            <div class={{sessionFlash.type}}>{{sessionFlash.message}}</div>
+        {{/if}}
+    </ul>
+</header>
+<main>
+    {{{body}}}
+</main>
+</body>
+</html>
