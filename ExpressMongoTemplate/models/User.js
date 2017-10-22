@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
     firstName: {type: types.String},
     lastName: {type: types.String},
     salt: {type: types.String},
-    roles: [{}]
+    roles: [{}],
+    isAdmin: {type: types.Boolean}
 });
 
 userSchema.method({
@@ -34,7 +35,8 @@ module.exports.seedAdmin = () => {
             firstName: `Hristo`,
             lastName: 'Skipernov',
             salt: salt,
-            roles: ['Admin']
+            roles: ['Admin'],
+            isAdmin: true
         });
     }).catch();
 };
